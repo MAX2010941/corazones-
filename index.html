@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Letras HD con Corazones</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let particulas = [];
+
+    // --- CONFIGURACIÓN PARA MÁXIMA CLARIDAD ---
+    const texto = "MAMA TE AMO"; // Cambia tu palabra aquí
+    const densidad = 5;      // MÁS BAJO = MÁS DEFINICIÓN (antes era 10)
+    const color = "#ff2d55";
+    // ------------------------------------------
+
+    function inicializar() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        particulas = [];
+
+        // Dibujamos el texto base con una fuente muy gruesa
+        ctx.fillStyle = "white";
+        ctx.font = "bold 180px sans-serif"; // Fuente más grande y clara
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
+
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Escaneado de alta densidad
+        for (let y = 0; y < canvas.height; y += densidad) {
+            for (let x = 0; x < canvas.width; x += densidad) {
+                const index = (y * canvas.width + x) * 4;
+                // Si el píxel es blanco, ponemos un corazón
+                if (imgData[index + 3] > 128) { 
+                    particulas.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        destX: x,
+                        destY: y,
+                        size: 2.5 // Tamaño fijo más pequeño para nitidez
+                    });
+                }
+            }
+        }
+    }
+
+    function dibujarCorazon(x, y, size) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.bezierCurveTo(x, y - size, x - size * 2, y - size, x - size * 2, y);
+        ctx.bezierCurveTo(x - size * 2, y + size * 2, x, y + size * 3, x, y + size * 3);
+        ctx.bezierCurveTo(x, y + size * 2, x + size * 2, y + size * 2, x + size * 2, y);
+        ctx.bezierCurveTo(x + size * 2, y - size, x, y - size, x, y);
+        ctx.fill();
+    }
+
+    function animar() {
+        // Fondo con rastro más corto para que no se vea sucio
+        ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < particulas.length; i++) {
+            let p = particulas[i];
+            // Movimiento más rápido y preciso
+            p.x += (p.destX - p.x) * 0.09;
+            p.y += (p.destY - p.y) * 0.09;
+            dibujarCorazon(p.x, p.y, p.size);
+        }
+
+        requestAnimationFrame(animar);
+    }
+
+    window.onload = () => {
+        inicializar();
+        animar();
+    };
+
+    window.onresize = inicializar;
+</script>
+</body>
+</html>
